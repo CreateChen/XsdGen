@@ -127,17 +127,6 @@ namespace XsdGen
         private XElement BuildSequence(Type type)
         {
             var sequence = new XElement(_xs + "sequence");
-            //如果是Response, 默认添加携程SOA中的ResponseStatus对象
-            if (type.Name.EndsWith("Response"))
-            {
-                sequence.Add(
-                    new XElement(
-                        _xs + "element",
-                        new XAttribute("name", "ResponseStatus"),
-                        new XAttribute("type", "common:ResponseStatusType")
-                        )
-                    );
-            }
             return sequence;
         }
 
