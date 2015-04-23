@@ -46,7 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Predeposit.cs" />
+    <Compile Include="TourDepositAudit.cs" />
+    <Compile Include="TourDepositConsume.cs" />
+    <Compile Include="TourDepositNotifyVBK.cs" />
+    <Compile Include="TourDepositQuery.cs" />
+    <Compile Include="TourEnumType.cs" />
+    <Compile Include="TourDepositChange.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
