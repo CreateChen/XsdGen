@@ -166,12 +166,17 @@ namespace XsdGen
                     var propertyClassFileGroup = Common.GetFileGroup(propertyInfo.PropertyType);
                     if (parentClassFileGroup != propertyClassFileGroup)
                     {
-                        _xsdFiles[parentClassFileGroup].Imports.Add(
-                            new XElement(
-                                _xs + "include",
-                                new XAttribute("schemaLocation", propertyClassFileGroup + ".xsd")
-                                )
-                            );
+                        string importXsd = propertyClassFileGroup + ".xsd";
+                        //判断是否已经存在该Import
+                        if (_xsdFiles[parentClassFileGroup].Imports.All(item => item.Attribute("schemaLocation").Value != importXsd))
+                        {
+                            _xsdFiles[parentClassFileGroup].Imports.Add(
+                                new XElement(
+                                    _xs + "include",
+                                    new XAttribute("schemaLocation", importXsd)
+                                    )
+                                );
+                        }
                     }
                 }
                 sequenceElement.Add(propertyElement);
