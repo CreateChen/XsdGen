@@ -135,7 +135,7 @@ namespace XsdGen
             var properties = type.GetProperties();
             foreach (var propertyInfo in properties)
             {
-                var typeName = Common.GetXsdType(propertyInfo.PropertyType);
+                var typeName = Common.GetXsdTypeName(propertyInfo.PropertyType);
                 var propertyElement = new XElement(
                     _xs + "element",
                     new XAttribute("name", propertyInfo.Name),

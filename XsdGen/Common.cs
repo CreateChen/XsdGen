@@ -33,7 +33,17 @@ namespace XsdGen
             {typeof (XmlQualifiedName), "QName"}
         };
 
-        public static string GetXsdType(Type type)
+        public static string GetXsdTypeName(Type type)
+        {
+            type = GetPropertyType(type);
+
+            //先从类型字典查找, 没找到, 说明是自定义类型
+            if (TypeMap.ContainsKey(type))
+                return "xs:" + TypeMap[type];
+            return type.Name;
+        }
+
+        public static Type GetPropertyType(Type type)
         {
             //数组类型
             if (type.IsArray)
@@ -44,11 +54,7 @@ namespace XsdGen
             {
                 type = GetGenericType(type);
             }
-
-            //先从类型字典查找, 没找到, 说明是自定义类型
-            if (TypeMap.ContainsKey(type))
-                return "xs:" + TypeMap[type];
-            return type.Name;
+            return type;
         }
 
         public static Type GetArrayType(Type type)
@@ -63,6 +69,8 @@ namespace XsdGen
 
         public static string GetFileGroup(Type type)
         {
+            type = GetPropertyType(type);
+
             if (type.IsClass)
                 return XsdComplexType.Get(type).FileGroup;
             if (type.IsEnum)
