@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -12,33 +13,45 @@ namespace XsdGen
         private readonly XNamespace _xs = "http://www.w3.org/2001/XMLSchema";
         private Assembly _assembly;
         private Dictionary<string, XsdFile> _xsdFiles;
+        private List<XElement> _elements;
 
         public void Build(Assembly assembly)
         {
             _assembly = assembly;
             _xsdFiles = new Dictionary<string, XsdFile>();
+            _elements = new List<XElement>();
 
-            var defaultImports = GetDefaultImports(_assembly).ToArray();
+            XElement[] defaultImports = GetDefaultImports(_assembly).ToArray();
+            XsdSchema defaultSchema = XsdSchema.Get(_assembly);
+
+            string directoryName = defaultSchema.PackageId ?? _assembly.FullName;
+            if (!Directory.Exists(directoryName))
+            {
+                Directory.CreateDirectory(directoryName);
+            }
 
             BuildTypes(_assembly);
             foreach (var item in _xsdFiles)
             {
-                item.Value.Schema = GetSchema(_assembly, item.Key);
+                item.Value.Schema = GetSchema(defaultSchema, item.Key);
                 foreach (var import in defaultImports)
                 {
                     item.Value.Imports.Add(import);
                 }
                 //生成XSD文件
-                string fileName = item.Key + ".xsd";
+                string fileName = string.Format("{0}/{1}.xsd", directoryName, item.Key);
                 item.Value.ToXML().Save(fileName);
                 Console.WriteLine("Generate {0}", fileName);
             }
+            //生成汇总XSD文件
+            var summaryXsdFile = BuildSummary(defaultSchema, defaultImports);
+            string summaryXsdFileName = string.Format("{0}/{1}.xsd", directoryName, directoryName);
+            summaryXsdFile.ToXML().Save(summaryXsdFileName);
+            Console.WriteLine(string.Format("{0}Generate Summary{0}\n{1}", new String('=', 10), summaryXsdFileName));
         }
 
-        private XElement GetSchema(Assembly assembly, string id)
+        private XElement GetSchema(XsdSchema xsdSchema, string id)
         {
-            var xsdSchema = XsdSchema.Get(assembly);
-
             var schema = new XElement(
                 _xs + "schema",
                 new XAttribute("id", id),
@@ -77,8 +90,10 @@ namespace XsdGen
                 if (type.IsClass)
                 {
                     var element = BuildElement(type);
+                    _elements.Add(element);
+                    //_xsdFiles[fileGroup].Elements.Add(element);
+
                     var complexTypeElement = BuildComplexType(type, out fileGroup);
-                    _xsdFiles[fileGroup].Elements.Add(element);
                     _xsdFiles[fileGroup].Elements.Add(complexTypeElement);
                 }
                 else if (type.IsEnum)
@@ -99,7 +114,8 @@ namespace XsdGen
             return new XElement(
                 _xs + "element",
                 new XAttribute("name", type.Name),
-                new XAttribute("type", name)
+                    new XAttribute("nillable", true),
+                new XAttribute("type", "ns:" + name)
                 );
         }
 
@@ -138,6 +154,30 @@ namespace XsdGen
         {
             var sequence = new XElement(_xs + "sequence");
             return sequence;
+        }
+
+        private XsdFile BuildSummary(XsdSchema defaultSchema, XElement[] defaultImports)
+        {
+            XsdFile xsdFile = new XsdFile();
+            xsdFile.Schema = GetSchema(defaultSchema, defaultSchema.PackageId ?? _assembly.FullName);
+            foreach (var import in defaultImports)
+            {
+                xsdFile.Imports.Add(import);
+            }
+            //include所有其它自动生成的xsd文件
+            foreach (var item in _xsdFiles)
+            {
+                xsdFile.Imports.Add(new XElement(
+                    _xs + "include",
+                    new XAttribute("schemaLocation", item.Key + ".xsd")
+                    ));
+            }
+            //添加dll中所有定义的element
+            foreach (var item in _elements)
+            {
+                xsdFile.Elements.Add(item);
+            }
+            return xsdFile;
         }
 
         private void AddProperties(Type type, XElement sequenceElement)

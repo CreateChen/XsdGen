@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace XsdAttribute
 {
@@ -13,6 +14,22 @@ namespace XsdAttribute
         public string XmlNamespace { get; set; }
         public string Namespace { get; set; }
         public string Common { get; set; }
+
+        //汇总dll中的类型，生成总的xsd
+        private string _packageId;
+        /// <summary>
+        /// 生成XSD的文件名称
+        /// </summary>
+        public string PackageId
+        {
+            get { return _packageId; }
+            set
+            {
+                //去除文件名中非法字符
+                var regex = new Regex(@"\:|\;|\/|\\|\||\,|\*|\?|\""|\<|\>");
+                _packageId = regex.Replace(value, "");
+            }
+        }
 
         public static XsdSchema Get(Assembly assembly)
         {
