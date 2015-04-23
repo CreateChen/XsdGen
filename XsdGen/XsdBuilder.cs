@@ -31,7 +31,7 @@ namespace XsdGen
                 //生成XSD文件
                 string fileName = item.Key + ".xsd";
                 item.Value.ToXML().Save(fileName);
-                Console.WriteLine("Generate {0}",fileName);
+                Console.WriteLine("Generate {0}", fileName);
             }
         }
 
@@ -47,10 +47,10 @@ namespace XsdGen
                 new XAttribute("attributeFormDefault", "unqualified"),
                 new XAttribute(XNamespace.Xmlns + "xs", _xs.ToString())
                 );
-            if(!string.IsNullOrEmpty(xsdSchema.XmlNamespace))
+            if (!string.IsNullOrEmpty(xsdSchema.XmlNamespace))
                 schema.SetAttributeValue("xmlns", xsdSchema.XmlNamespace);
             if (!string.IsNullOrEmpty(xsdSchema.Namespace))
-                schema.SetAttributeValue(XNamespace.Xmlns+"ns", xsdSchema.Namespace);
+                schema.SetAttributeValue(XNamespace.Xmlns + "ns", xsdSchema.Namespace);
             if (!string.IsNullOrEmpty(xsdSchema.Common))
                 schema.SetAttributeValue(XNamespace.Xmlns + "common", xsdSchema.Common);
             return schema;
@@ -91,10 +91,15 @@ namespace XsdGen
 
         public XElement BuildElement(Type type)
         {
+            //只有Request或者Response对象类型，末尾自动添加Type
+            string name = (type.Name.EndsWith("Request") || type.Name.EndsWith("Response"))
+                ? type.Name + "Type"
+                : type.Name;
+
             return new XElement(
                 _xs + "element",
                 new XAttribute("name", type.Name),
-                new XAttribute("type", type.Name + "Type")
+                new XAttribute("type", name)
                 );
         }
 
@@ -105,9 +110,14 @@ namespace XsdGen
             fileGroup = xsdComplexType.FileGroup;
             SetDefaultFile(fileGroup);
 
+            //只有Request或者Response对象类型，末尾自动添加Type
+            string name = (type.Name.EndsWith("Request") || type.Name.EndsWith("Response"))
+                ? type.Name + "Type"
+                : type.Name;
+
             var complexTypeElement = new XElement(
                 _xs + "complexType",
-                new XAttribute("name", type.Name + "Type")
+                new XAttribute("name", name)
                 );
 
             if (!string.IsNullOrEmpty(xsdComplexType.Annotation))
