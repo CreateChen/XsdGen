@@ -24,7 +24,7 @@ namespace XsdGen
             XElement[] defaultImports = GetDefaultImports(_assembly).ToArray();
             XsdSchema defaultSchema = XsdSchema.Get(_assembly);
 
-            string directoryName = defaultSchema.PackageId ?? _assembly.FullName;
+            string directoryName = defaultSchema.PackageId ?? _assembly.GetName().Name;
             if (!Directory.Exists(directoryName))
             {
                 Directory.CreateDirectory(directoryName);
@@ -44,7 +44,7 @@ namespace XsdGen
                 Console.WriteLine("Generate {0}", fileName);
             }
             //生成汇总XSD文件
-            var summaryXsdFile = BuildSummary(defaultSchema, defaultImports);
+            var summaryXsdFile = BuildSummary(defaultSchema, defaultImports, directoryName);
             string summaryXsdFileName = string.Format("{0}/{1}.xsd", directoryName, directoryName);
             summaryXsdFile.ToXML().Save(summaryXsdFileName);
             Console.WriteLine(string.Format("{0}Generate Summary{0}\n{1}", new String('=', 10), summaryXsdFileName));
@@ -156,10 +156,10 @@ namespace XsdGen
             return sequence;
         }
 
-        private XsdFile BuildSummary(XsdSchema defaultSchema, XElement[] defaultImports)
+        private XsdFile BuildSummary(XsdSchema defaultSchema, XElement[] defaultImports, string packageId)
         {
             XsdFile xsdFile = new XsdFile();
-            xsdFile.Schema = GetSchema(defaultSchema, defaultSchema.PackageId ?? _assembly.FullName);
+            xsdFile.Schema = GetSchema(defaultSchema, packageId);
             foreach (var import in defaultImports)
             {
                 xsdFile.Imports.Add(import);
